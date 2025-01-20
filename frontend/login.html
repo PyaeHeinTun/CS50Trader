@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS50 Trader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white shadow-md rounded-lg overflow-hidden max-w-md w-full">
+        <div class="flex">
+            <!-- Login Section -->
+            <section class="p-6 w-full" id="login-section">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Log In</h2>
+                <form id="signinform" class="space-y-4">
+                    <div>
+                        <label for="login-username" class="block text-gray-600">username</label>
+                        <input autocomplete="off" name="username" type="text" placeholder="Enter your username"
+                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-gray-600">Password</label>
+                        <input name="password" type="password" placeholder="Enter your password"
+                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">
+                        Log In
+                    </button>
+                </form>
+                <div class="text-center text-sm text-gray-600 mt-4">
+                    Don't have an account?
+                    <button class="text-blue-500 hover:underline" id="show-signup">
+                        Sign Up
+                    </button>
+                </div>
+            </section>
+
+            <!-- Signup Section -->
+            <section class="p-6 w-full hidden" id="signup-section">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Sign Up</h2>
+                <form id="signupform" class="space-y-4">
+                    <div>
+                        <label for="signup-username" class="block text-gray-600">Username</label>
+                        <input autocomplete="off" name="username" type="text" placeholder="Enter your username"
+                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label for="signup-password" class="block text-gray-600">Password</label>
+                        <input name="password" type="password" placeholder="Enter your password"
+                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label for="signup-password" class="block text-gray-600">Confirm Password</label>
+                        <input name="confirm" type="password" placeholder="Enter your password"
+                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition">
+                        Sign Up
+                    </button>
+                </form>
+                <div class="text-center text-sm text-gray-600 mt-4">
+                    Already have an account?
+                    <button class="text-green-500 hover:underline" id="show-login">
+                        Log In
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+    <div id="toast" class="toast show">
+        <div class="toast-content">
+            <!-- <i id="toast_icon" class="fas fa-solid fa-check check"></i> -->
+            <div class="message">
+                <span id="toast_title" class="text text-1"></span>
+                <span id="toast_body" class="text text-2"></span>
+            </div>
+        </div>
+        <div class="progress"></div>
+    </div>
+    <script src="./script/login/login.js" type="module"></script>
+    <script>
+        const loginSection = document.getElementById('login-section');
+        const signupSection = document.getElementById('signup-section');
+        const showSignup = document.getElementById('show-signup');
+        const showLogin = document.getElementById('show-login');
+
+        showSignup.addEventListener('click', () => {
+            loginSection.classList.add('hidden');
+            signupSection.classList.remove('hidden');
+        });
+
+        showLogin.addEventListener('click', () => {
+            signupSection.classList.add('hidden');
+            loginSection.classList.remove('hidden');
+        });
+    </script>
+</body>
+
+</html>

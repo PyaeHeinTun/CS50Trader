@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS50Trader Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <!-- Header -->
+    <header class="bg-green-600 text-white p-4 flex flex-wrap justify-between items-center">
+        <div class="text-2xl font-bold">CS50Trader</div>
+        <nav class="space-x-4 hidden md:flex items-center">
+            <a href="./index.html" class="hover:underline">Dashboard</a>
+            <a href="./trade_settings.html" class="hover:underline">Trade Settings</a>
+            <a href="./history.html" class="hover:underline">Trade History</a>
+            <a href="./account.html" class="hover:underline">Account</a>
+            <button class="bg-red-500 px-4 py-2 rounded hover:bg-red-700 logout_btn">Logout</button>
+        </nav>
+        <!-- Mobile Menu Button -->
+        <button id="menuToggle" class="md:hidden text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+        </button>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden w-full mt-4 md:hidden">
+            <ul class="flex flex-col space-y-2">
+                <li><a href="./index.html" class="hover:underline">Dashboard</a></li>
+                <li><a href="./trade_settings.html" class="hover:underline">Trade Settings</a></li>
+                <li><a href="./history.html" class="hover:underline">Trade History</a></li>
+                <li><a href="./account.html" class="hover:underline">Account</a></li>
+                <button class="bg-red-500 px-4 py-2 rounded hover:bg-red-700 logout_btn">Logout</button>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="flex flex-col lg:flex-row h-[88vh] md:h-[85vh]">
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto p-6 mb-10 space-y-6 md:grid md:grid-cols-2 md:gap-4">
+            <!-- Profit Section -->
+            <section class="bg-white shadow rounded p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Profit Chart</h2>
+                    <select id="timeFrame" class="border rounded p-2">
+                        <option value="7days">Last 7 Days</option>
+                        <option value="14days">Last 14 Days</option>
+                    </select>
+                </div>
+                <canvas id="marketChart" class="w-full h-64"></canvas>
+            </section>
+
+            <!-- Performance Metrics Section -->
+            <section class="bg-white shadow rounded p-4">
+                <h2 class="text-xl font-bold mb-4">Chart Metrics</h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-green-100 p-4 rounded text-green-800">
+                        Profit/Loss: <span id="profit-loss">$0.00</span>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded text-blue-800">
+                        Win Rate: <span id="win-rate">0%</span>
+                    </div>
+                    <div class="bg-yellow-100 p-4 rounded text-yellow-800">
+                        Total Trades: <span id="trades">0</span>
+                    </div>
+                    <div class="bg-purple-100 p-4 rounded text-purple-800">
+                        Balance: <span id="holdings">$0.00</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Open Trade Section -->
+            <section class="bg-white shadow rounded p-4 md:col-span-2">
+                <h2 class="text-xl font-bold mb-4">Open Trades</h2>
+                <div class="overflow-x-auto">
+                    <table id="trade-table" class="min-w-full border-collapse border border-gray-300">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="border border-gray-300 px-4 py-2">Trading Pair</th>
+                                <th class="border border-gray-300 px-4 py-2">Trade Type</th>
+                                <th class="border border-gray-300 px-4 py-2">Entry Price</th>
+                                <th class="border border-gray-300 px-4 py-2">Current Price</th>
+                                <th class="border border-gray-300 px-4 py-2">Profit/Loss</th>
+                                <th class="border border-gray-300 px-4 py-2">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trade-tbody">
+
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    <div id="toast" class="toast show">
+        <div class="toast-content">
+            <!-- <i id="toast_icon" class="fas fa-solid fa-check check"></i> -->
+            <div class="message">
+                <span id="toast_title" class="text text-1">Success</span>
+                <span id="toast_body" class="text text-2">Your changes has been saved</span>
+            </div>
+        </div>
+        <div class="progress"></div>
+    </div>
+    <script src="./script.js" type="module"></script>
+    <script src="./script/index/index.js" type="module"></script>
+    <script>
+        // Mobile Menu Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        menuToggle.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+
+</html>

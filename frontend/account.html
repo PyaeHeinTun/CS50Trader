@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+    <!-- Navigaton -->
+    <header class="bg-green-600 text-white p-4 flex flex-wrap justify-between items-center">
+        <div class="text-2xl font-bold">CS50Trader</div>
+        <nav class="space-x-4 hidden md:flex items-center">
+            <a href="./index.html" class="hover:underline">Dashboard</a>
+            <a href="./trade_settings.html" class="hover:underline">Trade Settings</a>
+            <a href="./history.html" class="hover:underline">Trade History</a>
+            <a href="./account.html" class="hover:underline">Account</a>
+            <button class="bg-red-500 px-4 py-2 rounded hover:bg-red-700 logout_btn">Logout</button>
+        </nav>
+        <!-- Mobile Menu Button -->
+        <button id="menuToggle" class="md:hidden text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+        </button>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden w-full mt-4 md:hidden">
+            <ul class="flex flex-col space-y-2">
+                <li><a href="./index.html" class="hover:underline">Dashboard</a></li>
+                <li><a href="./trade_settings.html" class="hover:underline">Trade Settings</a></li>
+                <li><a href="./history.html" class="hover:underline">Trade History</a></li>
+                <li><a href="./account.html" class="hover:underline">Account</a></li>
+                <button class="bg-red-500 px-4 py-2 rounded hover:bg-red-700 logout_btn">Logout</button>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg flex flex-col lg:flex-row h-[88vh] md:h-[85vh]">
+        <main class="flex-1 overflow-y-auto p-6 space-y-6">
+            <!-- Profile Section -->
+            <section>
+                <h2 class="text-xl font-bold mb-4">Profile Information</h2>
+                <form id="change_password_form" class="space-y-4">
+                    <div>
+                        <label for="name" class="block mb-2 text-gray-700">username</label>
+                        <input type="text" id="name" disabled
+                            class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500"
+                            placeholder="username" value="abc" />
+                    </div>
+                    <div>
+                        <label for="password" class="block mb-2 text-gray-700">Change Password</label>
+                        <input name="password" type="password" id="password"
+                            class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500"
+                            placeholder="New Password" />
+                    </div>
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
+                        Save Changes
+                    </button>
+                </form>
+            </section>
+
+            <form id="add_balance" class="space-y-4">
+                <div>
+                    <label for="balance" class="block mb-2 text-gray-700">Balance Value</label>
+                    <input name="balance" type="number" id="balance"
+                        class="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500"
+                        placeholder="balance to add" value="0" />
+                </div>
+                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
+                    Add Balance
+                </button>
+            </form>
+        </main>
+    </main>
+    <div id="toast" class="toast show">
+        <div class="toast-content">
+            <div class="message">
+                <span id="toast_title" class="text text-1">Success</span>
+                <span id="toast_body" class="text text-2">Your changes has been saved</span>
+            </div>
+        </div>
+        <div class="progress"></div>
+    </div>
+    <script src="./script.js" type="module"></script>
+    <script src="./script/account/account.js" type="module"></script>
+    <script>
+        // Mobile Menu Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        menuToggle.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+
+</html>
