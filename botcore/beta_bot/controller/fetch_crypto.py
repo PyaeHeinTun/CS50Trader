@@ -74,6 +74,8 @@ async def fetch_data(exchange: ccxt.binance, symbol, timeframe, limit):
     temp_storage_data[TempStorage.cursor] = cursor
     temp_storage_data[TempStorage.conn] = conn
     temp_storage_data[TempStorage.exchange] = exchange
+    temp_storage_data[TempStorage.highestProfitRoi][symbol] = 0
+    current_trade_list[symbol] = []
 
     while True:
         _command_for_run = temp_storage_data[TempStorage.command_for_run]
@@ -121,7 +123,7 @@ async def fetch_data(exchange: ccxt.binance, symbol, timeframe, limit):
                 temp_storage_data[TempStorage.future_prediction][symbol] = controller.predict_future(
                     temp_storage_data[TempStorage.dataframe][symbol][:length_for_predict], symbol)
 
-            dataframe = temp_storage_data[TempStorage.dataframe][symbol]
+            dataframe:pd.DataFrame = temp_storage_data[TempStorage.dataframe][symbol]
             # Strategy Manager
             trade_datas = await controller.main_trade_func(dataframe, temp_storage_data[TempStorage.future_prediction], symbol)
             current_trade_list[symbol] = trade_datas

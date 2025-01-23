@@ -15,6 +15,7 @@ class TempStorage(str, Enum):
     current_data = "current_data"
     conditionToAddNew = "conditionToAddNew"
     tickSize = "tickSize"
+    highestProfitRoi = "highestProfitRoi"
 
 
 temp_storage_data = {
@@ -25,4 +26,5 @@ temp_storage_data = {
     TempStorage.current_data: {},
     TempStorage.conditionToAddNew: {},
     TempStorage.tickSize: {},
+    TempStorage.highestProfitRoi: {},
 }

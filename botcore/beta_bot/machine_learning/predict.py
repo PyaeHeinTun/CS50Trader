@@ -345,20 +345,21 @@ def extract_features(dataframe: pd.DataFrame, training_params,symbol:str):
     return df
 
 def train_model(df,training_params) -> VotingClassifier:
+    test_number = 0
+
     dataframe = df.copy()
-    dataframe = dataframe[:len(dataframe)-10]
+    dataframe = dataframe
     dataframe.dropna(inplace=True)
     feature_count = training_params["feature_count"]+1
     feature_columns = [f'f{i}' for i in range(1, feature_count)]
     df_features = dataframe[feature_columns]
     df_y = dataframe['y_train']
 
-    test_number = 10
-    X_train, X_test, y_train, y_test = train_test_split(df_features, df_y, test_size=0.1, random_state=42)
-    # X_train = df_features[:len(df_features)-test_number]
-    # X_test = df_features[len(df_features)-test_number:]
-    # y_train = df_y[:len(df_y)-test_number]
-    # y_test = df_y[len(df_y)-test_number:]
+    # X_train, X_test, y_train, y_test = train_test_split(df_features, df_y, test_size=0.001, random_state=42)
+    X_train = df_features[:len(df_features)-test_number]
+    X_test = df_features[len(df_features)-test_number:]
+    y_train = df_y[:len(df_y)-test_number]
+    y_test = df_y[len(df_y)-test_number:]
     # Build Model
     knn = KNeighborsClassifier(n_neighbors=1)
     cat_model = CatBoostClassifier(
@@ -434,7 +435,7 @@ class CoreML(metaclass=Singleton):
 
         feature_count = training_params["feature_count"]+1
         feature_columns = [f'f{i}' for i in range(1, feature_count)]
-        data_for_predict = self.extracted_data[feature_columns][len(self.extracted_data)-3:len(self.extracted_data)-1]
+        data_for_predict = self.extracted_data[feature_columns][-3:-1]
         return self.predict(data_for_predict)
 
     def predict(self,data_for_predit:pd.DataFrame) -> list:

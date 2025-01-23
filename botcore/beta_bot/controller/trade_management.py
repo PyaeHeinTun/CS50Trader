@@ -18,25 +18,24 @@ async def main_trade_func(dataframe: pd.DataFrame, future_predictions: dict, pai
     trades_list = _find_existing_trade(cursor, conn,pair)
     future_predictions = future_predictions[pair]
 
+    is_symbol_in_trade_list = pair in [trade.pair for trade in trades_list]
     # If current trades exits
-    if (len(trades_list) != 0):
+    if is_symbol_in_trade_list:
         _update_current_price_in_trade(cursor, conn, current_price,pair)
 
         for trade in trades_list:
             if (_custom_exit(dataframe, trade, future_predictions) & (trade.pair == pair)):
                 await _close_position(cursor, conn, trade)
-
-        return trades_list
-
     else:
         signal, should_trade = _populate_trade_entry(
             dataframe, future_predictions)
         if (should_trade):
             quantity = (stake_ammount * leverage) / current_price
+            temp_storage_data[TempStorage.highestProfitRoi][pair] = 0
             new_trade = _get_trade_object(
                 signal, current_price, leverage, pair, stake_ammount,quantity)
             await _create_position(cursor, conn, new_trade)
-        return trades_list
+    return trades_list
 
 
 def _custom_exit(dataframe: pd.DataFrame, trade: Trade, future_predictions: dict) -> bool:
@@ -47,35 +46,73 @@ def _custom_exit(dataframe: pd.DataFrame, trade: Trade, future_predictions: dict
     trade_open_rate = trade.entry_price
 
     # Initialize exit reason
-    exit_reason = None
+    exit_reason = "none"
 
     # **2. Signal-Based Exits**
-    should_exit = should_exit_trade(future_predictions, trade.is_short)
+    should_exit = should_exit_trade(future_predictions, trade)
     if should_exit:
         if current_profit_roi > 0:
             exit_reason = "signal_exit_profit"  # Exit based on signal while in profit
         else:
             exit_reason = "signal_exit_loss"  # Exit based on signal while in loss
 
+    should_exit = should_exit_trailing(trade,current_profit_roi)
+    if should_exit:
+        exit_reason = "trailing_stop"
     # Confirm exit if a reason is identified
     return _confirm_trade_exit(exit_reason)
 
+def should_exit_trailing(trade:Trade,current_profit_roi:float) -> bool:
+    percentage = 0.5
+    highest_profit = temp_storage_data[TempStorage.highestProfitRoi][trade.pair]
 
-def should_exit_trade(indices: dict, is_short: int) -> bool:
+    if (current_profit_roi > 1) and (current_profit_roi < (highest_profit*percentage)):
+        return True
+    
+    if current_profit_roi > highest_profit:
+        temp_storage_data[TempStorage.highestProfitRoi][trade.pair] = current_profit_roi
+    return False
+
+def should_exit_trade(indices: dict, trade: Trade) -> bool:
     # For long positions (is_short == 0)
-    if is_short == 0:
-        consistent_exit_signals = (
-            ((indices[0]['class'] == -1) and (indices[1]['class'] == -1))
-            or
-            (indices[0]['trend'] == -1)
-        )
+    consistent_exit_signals = False
+    if trade.is_short == 0:
+        if trade.calculate_profit_ratio()['roi'] > 0:
+            consistent_exit_signals = (
+                ((indices[0]['class'] == 1) and (indices[1]['class'] == -1))
+                or
+                ((indices[0]['class'] == -1) and (indices[1]['class'] == 1))
+                or
+                (indices[0]['trend'] == -1)
+                or
+                ((indices[0]['class'] == -1) and (indices[1]['class'] == -1))
+            )
+        else:
+            consistent_exit_signals = (
+                ((indices[0]['class'] == -1) and (indices[1]['class'] == -1))
+                or
+                (indices[0]['trend'] == -1)
+            )
     # For short positions (is_short == 1)
-    elif is_short == 1:
-        consistent_exit_signals = (
-            ((indices[0]['class'] == 1) and (indices[1]['class'] == 1))
-            or
-            (indices[0]['trend'] == 1)
-        )
+    elif trade.is_short == 1:
+        if trade.calculate_profit_ratio()['roi'] > 0:
+            consistent_exit_signals = (
+                ((indices[0]['class'] == -1) and (indices[1]['class'] == 1))
+                or
+                ((indices[0]['class'] == 1) and (indices[1]['class'] == -1))
+                or
+                (indices[0]['trend'] == 1)
+                or
+                ((indices[0]['class'] == 1) and (indices[1]['class'] == 1))
+            )
+        else:
+            consistent_exit_signals = (
+                ((indices[0]['class'] == 1) and (indices[1]['class'] == 1))
+                or
+                (indices[0]['trend'] == 1)
+            )
+    else:
+        consistent_exit_signals = False
 
     # Exit if any of the signals match the condition for exiting the trade
     return consistent_exit_signals
@@ -95,10 +132,10 @@ def _populate_trade_entry(dataframe: pd.DataFrame, future_predictions: dict) -> 
 def should_enter_trade(indices: dict) -> bool:
     # Evaluate all indices for long and short signals
     consistent_buy_signals = all(data["class"] == 1 for data in indices.values())
-    consistent_up_trend = all(data["trend"] == 1 for data in indices.values())
+    consistent_up_trend = indices[0]['trend']== 1
 
     consistent_sell_signals = all(data["class"] == -1 for data in indices.values())
-    consistent_down_trend = all(data["trend"] == -1 for data in indices.values())
+    consistent_down_trend = indices[0]['trend']== -1
 
     if consistent_buy_signals and consistent_up_trend:
         return (0,True)
@@ -109,6 +146,7 @@ def should_enter_trade(indices: dict) -> bool:
 async def _create_position(cursor: sqlite3.Cursor, conn: sqlite3.Connection, trade: Trade):
     order_book = temp_storage_data[f'order_book{trade.pair}']
 
+    # print(f"ENTER {'Short' if trade.is_short==1 else 'Long'} {trade.pair}  AT {order_book['bids'][0][0]}")
     if (trade.is_short == 1):
         database.create_trade(cursor, conn, order_book['bids'][0][0], trade.exit_price,
                                 1, trade.created_at, trade.updated_at, trade.leverage, trade.stake_ammount,trade.quantity, trade.pair, trade.is_completed)
@@ -121,7 +159,9 @@ async def _create_position(cursor: sqlite3.Cursor, conn: sqlite3.Connection, tra
 async def _close_position(cursor: sqlite3.Cursor, conn: sqlite3.Connection, trade: Trade):
     is_dry_run = temp_storage_data[TempStorage.config]['dry_run']
     exchange: ccxt.binance = temp_storage_data[TempStorage.exchange]
+    order_book = temp_storage_data[f'order_book{trade.pair}']
 
+    # print(f"EXIT {'Short' if trade.is_short==1 else 'Long'} {trade.pair}  AT {order_book['bids'][0][0]}")
     database.update_pending_to_completed_trade(cursor, conn, trade.id)
     return trade
 

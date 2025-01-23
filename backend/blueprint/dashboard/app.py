@@ -51,7 +51,7 @@ def getChart() -> dict:
                 "data": get_profit_for_each_day(day_7_day_list,day_7_trade_list),
                 "metrics" : {
                     "profitLoss": day_7_profit_loss,
-                    "winRate": (len(day_7_trade_list_won)/len(day_7_trade_list))*100,
+                    "winRate": 0 if len(day_7_trade_list)==0 else (len(day_7_trade_list_won)/len(day_7_trade_list))*100,
                     "totalTrades": len(day_7_trade_list),
                     "holdings": (user.balance + day_7_profit_loss) if (user.balance + day_7_profit_loss) > 0 else 0,
                 },
@@ -61,7 +61,7 @@ def getChart() -> dict:
                 "data": get_profit_for_each_day(day_14_day_list,day_14_trade_list),
                 "metrics" : {
                     "profitLoss": day_14_profit_loss,
-                    "winRate": (len(day_14_trade_list_won)/len(day_14_trade_list))*100,
+                    "winRate": 0 if len(day_14_trade_list)==0 else (len(day_14_trade_list_won)/len(day_14_trade_list))*100,
                     "totalTrades": len(day_14_trade_list),
                     "holdings": (user.balance + day_14_profit_loss) if (user.balance + day_14_profit_loss) > 0 else 0,
                 },
