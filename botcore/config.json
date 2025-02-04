@@ -8,10 +8,6 @@
     "dry_run": true,
     "dry_run_wallet": 100,
     "exchange": {
-        "test_key": "52a65ac457d28e61c7f76a769754b3bdfe413d7c62e09a8605b55aaa140e9284",
-        "test_secret": "c86f35f7b8e4f75154ef39c650ff1513657a67799a51ee7429dd4d64939ba386",
-        "real_key": "D2Ww9DeCDd6UNP9eMUND2Qv9vwJmK8CGeB8GjN0R2ZaCA4G1koUEYE5min5z07OX",
-        "real_secret": "uIZRZqxgkPUclI2hpRXXyvGFtqbxTv7fGflMSDfmPnGhBuNsCXwu2M6ysAok5Kv9",
         "pair_whitelist": [
             "1000BONK/USDT:USDT",
             "BTC/USDT:USDT",
@@ -20,42 +16,14 @@
         "type": "future",
         "ohlcv_candle_limit": 4000
     },
-    "telegram": {
-        "token": "7026320361:AAEkPW07NV9ki5D9dC10-l4oN8O4piDmC2M",
-        "user_id": "2146800175",
-        "chat_id": "2146800175"
-    },
     "process_throttle_secs": 0.1,
     "training_params": {
-        "filter_method": [],
-        "filter_params": {
-            "regime": {
-                "threshold": -0.1
-            },
-            "trend": {
-                "periods": [
-                    0,
-                    5,
-                    10
-                ]
-            },
-            "stc": {
-                "length": 12,
-                "fast": 26,
-                "slow": 50
-            },
-            "ut": {
-                "sensitivity": 1,
-                "atr_period": 10
-            }
-        },
-        "neighbor_count": 8,
-        "feature_count": 5,
-        "future_count": 1,
+        "feature_count": 8,
+        "future_count": 0,
         "f1": {
             "name": "rsi",
             "paramsA": 3,
-            "paramsB": 2
+            "paramsB": 1
         },
         "f2": {
             "name": "wt",
@@ -69,13 +37,28 @@
         },
         "f4": {
             "name": "adx",
-            "paramsA": 3,
-            "paramsB": 2
+            "paramsA": 2,
+            "paramsB": 3
         },
         "f5": {
             "name": "rsi",
-            "paramsA": 2,
-            "paramsB": 2
+            "paramsA": 6,
+            "paramsB": 13
+        },
+        "f6": {
+            "name": "wt",
+            "paramsA": 8,
+            "paramsB": 30
+        },
+        "f7": {
+            "name": "cci",
+            "paramsA": 80,
+            "paramsB": 100
+        },
+        "f8": {
+            "name": "adx",
+            "paramsA": 10,
+            "paramsB": 30
         }
     }
 }

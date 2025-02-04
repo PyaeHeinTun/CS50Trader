@@ -283,14 +283,13 @@ def find_ytrain(z1:np.ndarray,z2:np.ndarray,direction:np.ndarray,high:np.ndarray
             result_remainder[0] = -1
             result[data_index_remainder:]  = result_remainder
             previous_index = data_index_remainder + max_index
-        if(result[data_index_remainder-1] == -1):
+        else:
             result_remainder[:min_index] = 1   
             result_remainder[min_index:] = 0
             result_remainder = np.roll(result_remainder,1)
             result_remainder[0] = 1
             result[data_index_remainder:]  = result_remainder
             previous_index = data_index_remainder + min_index
-        
 
     # 1 into -1 and -1 into 1 Conversion
     mask_1 = result == 1
@@ -328,8 +327,8 @@ def zigzagpp(_high,_low,depth,deviation,backstep,symbol) -> tuple:
     return price_index_1,price_index_2,df['direction']
 
 def label_market_trend(df: pd.DataFrame,symbol:str ,future_count: int = 2) -> pd.DataFrame:
-    z1,z2,direction = zigzagpp(df['high'],df['low'],2,2,2,symbol)
-    df['y_train'] = pd.Series(find_ytrain(z1.values,z2.values,direction.values,df['high'].values,df['low'].values)).shift(-1)
+    z1,z2,direction = zigzagpp(df['high'],df['low'],2,1,2,symbol)
+    df['y_train'] = pd.Series(find_ytrain(z1.values,z2.values,direction.values,df['high'].values,df['low'].values)).shift(-future_count)
     df.loc[df['y_train'] == 0,['y_train']] = np.nan
     return df['y_train']
 
@@ -345,7 +344,7 @@ def extract_features(dataframe: pd.DataFrame, training_params,symbol:str):
     return df
 
 def train_model(df,training_params) -> VotingClassifier:
-    test_number = 0
+    test_number = 10
 
     dataframe = df.copy()
     dataframe = dataframe
@@ -361,14 +360,14 @@ def train_model(df,training_params) -> VotingClassifier:
     y_train = df_y[:len(df_y)-test_number]
     y_test = df_y[len(df_y)-test_number:]
     # Build Model
-    knn = KNeighborsClassifier(n_neighbors=1)
+    knn = KNeighborsClassifier(n_neighbors=50)
     cat_model = CatBoostClassifier(
-        iterations=50,
+        iterations=100,
         verbose=False,
-        depth=2,
+        depth=3,
         learning_rate=0.01,
         loss_function='Logloss',
-        rsm=0.95,
+        rsm=0.99,
         border_count=64,
         eval_metric='AUC',
     )
@@ -381,11 +380,6 @@ def train_model(df,training_params) -> VotingClassifier:
         voting='soft'
     )
     model.fit(X_train, y_train)
-    # Predict Model
-    # if test_number > 0:
-    #     y_pred = model.predict(X_test)
-    #     print(f"Accuracy Test : {accuracy_score(y_test,y_pred)}")
-    #     print(classification_report(y_test, y_pred))
     return model
 
 def fractalFilters(predict_value: pd.Series):
@@ -445,4 +439,5 @@ class CoreML(metaclass=Singleton):
         current_predict_probability = self.model.predict_proba(data_for_predit)
         current_predict_probability = np.amax(
         current_predict_probability, axis=1, keepdims=True)
-        return current_predict_class
+        current_predict_probability = [data[0] for data in current_predict_probability]
+        return current_predict_class , current_predict_probability

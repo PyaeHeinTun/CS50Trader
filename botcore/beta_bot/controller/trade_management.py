@@ -44,84 +44,54 @@ def _custom_exit(dataframe: pd.DataFrame, trade: Trade, future_predictions: dict
     current_profit_roi = current_profit["roi"]
     current_price = dataframe.iloc[-1]["close"]
     trade_open_rate = trade.entry_price
-
     # Initialize exit reason
     exit_reason = "none"
-
     # **2. Signal-Based Exits**
     should_exit = should_exit_trade(future_predictions, trade)
     if should_exit:
         if current_profit_roi > 0:
-            exit_reason = "signal_exit_profit"  # Exit based on signal while in profit
+            exit_reason = "signal_exit_profit"
         else:
-            exit_reason = "signal_exit_loss"  # Exit based on signal while in loss
-
-    should_exit = should_exit_trailing(trade,current_profit_roi)
+            exit_reason = "signal_exit_loss"
+    should_exit = should_exit_trailing(trade)
     if should_exit:
         exit_reason = "trailing_stop"
-    # Confirm exit if a reason is identified
+    should_exit = should_exit_when_minute(trade)
+    if should_exit:
+        exit_reason = "time_out"
     return _confirm_trade_exit(exit_reason)
 
-def should_exit_trailing(trade:Trade,current_profit_roi:float) -> bool:
-    percentage = 0.5
-    highest_profit = temp_storage_data[TempStorage.highestProfitRoi][trade.pair]
-
-    if (current_profit_roi > 1) and (current_profit_roi < (highest_profit*percentage)):
+def should_exit_when_minute(trade:Trade) -> bool:
+    profit_roi = trade.calculate_profit_ratio()['roi']
+    if (profit_roi < 0) and ( int(time.time()) >= (trade.created_at + 59) ):
         return True
-    
+    return False
+
+def should_exit_trailing(trade:Trade) -> bool:
+    current_profit_roi:float = trade.calculate_profit_ratio()['roi']
+    percentage = 0.3
+    # if highest_profit = 0.3 and current_profit = 0.1 < (0.3 * 0.3)
+    highest_profit = temp_storage_data[TempStorage.highestProfitRoi][trade.pair]
+    if (highest_profit > 0.6) and (current_profit_roi < (highest_profit*percentage)):
+        return True
     if current_profit_roi > highest_profit:
         temp_storage_data[TempStorage.highestProfitRoi][trade.pair] = current_profit_roi
     return False
 
 def should_exit_trade(indices: dict, trade: Trade) -> bool:
-    # For long positions (is_short == 0)
     consistent_exit_signals = False
     if trade.is_short == 0:
-        if trade.calculate_profit_ratio()['roi'] > 0:
-            consistent_exit_signals = (
-                ((indices[0]['class'] == 1) and (indices[1]['class'] == -1))
-                or
-                ((indices[0]['class'] == -1) and (indices[1]['class'] == 1))
-                or
-                (indices[0]['trend'] == -1)
-                or
-                ((indices[0]['class'] == -1) and (indices[1]['class'] == -1))
-            )
-        else:
-            consistent_exit_signals = (
-                ((indices[0]['class'] == -1) and (indices[1]['class'] == -1))
-                or
-                (indices[0]['trend'] == -1)
-            )
-    # For short positions (is_short == 1)
+        consistent_exit_signals = (indices[0]['class'] == -1) or (indices[1]['class'] == -1)
     elif trade.is_short == 1:
-        if trade.calculate_profit_ratio()['roi'] > 0:
-            consistent_exit_signals = (
-                ((indices[0]['class'] == -1) and (indices[1]['class'] == 1))
-                or
-                ((indices[0]['class'] == 1) and (indices[1]['class'] == -1))
-                or
-                (indices[0]['trend'] == 1)
-                or
-                ((indices[0]['class'] == 1) and (indices[1]['class'] == 1))
-            )
-        else:
-            consistent_exit_signals = (
-                ((indices[0]['class'] == 1) and (indices[1]['class'] == 1))
-                or
-                (indices[0]['trend'] == 1)
-            )
+        consistent_exit_signals = (indices[0]['class'] == 1) or (indices[1]['class'] == 1)
     else:
         consistent_exit_signals = False
-
-    # Exit if any of the signals match the condition for exiting the trade
     return consistent_exit_signals
 
 def _confirm_trade_exit(exit_reason: str) -> bool:
-    valid_exit_reasons = {"trailing_stop", "signal_exit_profit", "signal_exit_loss"}
+    valid_exit_reasons = {"signal_exit_profit", "signal_exit_loss" , "trailing_stop" }
     return exit_reason in valid_exit_reasons
 
-    
 def _populate_trade_entry(dataframe: pd.DataFrame, future_predictions: dict) -> bool:
     cursor: sqlite3.Cursor = temp_storage_data[TempStorage.cursor]
     conn: sqlite3.Connection = temp_storage_data[TempStorage.conn]
@@ -131,15 +101,22 @@ def _populate_trade_entry(dataframe: pd.DataFrame, future_predictions: dict) -> 
 
 def should_enter_trade(indices: dict) -> bool:
     # Evaluate all indices for long and short signals
-    consistent_buy_signals = all(data["class"] == 1 for data in indices.values())
-    consistent_up_trend = indices[0]['trend']== 1
+    consistent_buy_signals = ( 
+                                ( indices[0]['class'] == 1 ) and ( indices[1]['class'] == 1 )
+                             )
+    consistent_buy_signals_probability = indices[1]['probability'] >= 0.8
+    consistent_up_trend = indices[0]['trend'] == 1
 
-    consistent_sell_signals = all(data["class"] == -1 for data in indices.values())
-    consistent_down_trend = indices[0]['trend']== -1
+    consistent_sell_signals = ( 
+                                ( indices[0]['class'] == -1 ) and ( indices[1]['class'] == -1 )
+                             )
+    consistent_sell_signals_probability = indices[1]['probability'] >= 0.8
+    consistent_down_trend = indices[0]['trend'] == -1
 
-    if consistent_buy_signals and consistent_up_trend:
+    is_in_time = datetime.fromtimestamp(int(time.time())).second in [1,2]
+    if consistent_buy_signals and is_in_time:
         return (0,True)
-    if consistent_sell_signals and consistent_down_trend:
+    if consistent_sell_signals and is_in_time:
         return (1,True)
     return ("none",False)
 

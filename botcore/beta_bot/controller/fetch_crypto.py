@@ -28,27 +28,23 @@ async def fetch_ohlcv_info(exchange: ccxt.binance, symbol, timeframe, limit) -> 
     # Fetch 10,000 candles in chunks of 1500 candles
     num_candles_to_fetch = limit
     candles_per_request = 1000
-    start_index = 0
+    index = 0
     dataframe = pd.DataFrame()
+    since = None
 
-    while start_index < num_candles_to_fetch:
-        # Determine the end index for this request
-        end_index = min(start_index + candles_per_request,
-                        num_candles_to_fetch)
-
+    while index < num_candles_to_fetch:
         # Fetch candles for this chunk
         candles = await exchange.fetch_ohlcv(
-            symbol, timeframe, limit=candles_per_request, since=None)
-
+            symbol, timeframe, limit=candles_per_request, since=since)
         # Convert candles to DataFrame
         df = pd.DataFrame(candles, columns=[
                           'date', 'open', 'high', 'low', 'close', 'volume'])
         df['date'] = pd.to_datetime(df['date'], unit='ms')
         # Append the candles to the DataFrame
-        dataframe = pd.concat([dataframe, df], ignore_index=True)
-
+        dataframe = pd.concat([df, dataframe], ignore_index=True)
         # Update start index for the next request
-        start_index += candles_per_request
+        index += candles_per_request
+        since = candles[0][0]-(60000*(candles_per_request))
     return dataframe
 
 timeframe_conditions = {
@@ -79,7 +75,7 @@ async def fetch_data(exchange: ccxt.binance, symbol, timeframe, limit):
 
     while True:
         _command_for_run = temp_storage_data[TempStorage.command_for_run]
-        if (_command_for_run == "start"):
+        try:
             speed_counter_start = datetime.now()
             current_time = datetime.utcnow()
             temp_storage_data[TempStorage.conditionToAddNew][symbol] = timeframe_conditions.get(
@@ -131,15 +127,9 @@ async def fetch_data(exchange: ccxt.binance, symbol, timeframe, limit):
             # helper.logger_test(
             #     temp_storage_data[TempStorage.future_prediction], speed_counter_start, speed_counter_stop)
             helper.logger(current_trade_list, speed_counter_start, speed_counter_stop)
-        else:
-            speed_counter_start = datetime.now()
-            if (f"order_book{symbol}" in temp_storage_data):
-                temp_storage_data.pop(f"order_book{symbol}")
-            speed_counter_stop = datetime.now(
-            )
-            helper.logger(current_trade_list,speed_counter_start, speed_counter_stop)
-            await asyncio.sleep(0.5)
-
+        except Exception as e:
+            print(f"Error in fetch_data: {e}")
+            await asyncio.sleep(1)
 
 async def fetch_multiple_coins() -> None:
     exchange = ccxt.binance()
